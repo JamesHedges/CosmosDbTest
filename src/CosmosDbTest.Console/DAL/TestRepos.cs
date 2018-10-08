@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 
+
+// For samples
+// github clone https://github.com/Azure/azure-cosmosdb-dotnet.git
 namespace CosmosDbTest.DAL
 {
     public class TestRepos : IDisposable
