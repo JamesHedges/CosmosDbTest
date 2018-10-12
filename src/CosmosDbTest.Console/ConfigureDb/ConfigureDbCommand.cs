@@ -1,5 +1,6 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
+using CosmosDbTest.DAL;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -28,6 +29,8 @@ namespace CosmosDbTest.ConfigureDb
         {
             await Task.Delay(10);
             _logger.LogInformation("Handling ConfigureDbCommand");
+            var migrator = new MigrateDocumentDb(_logger, _configuration);
+            await migrator.DoMigration();
             return new ConfigureDbResponse();
         }
     }

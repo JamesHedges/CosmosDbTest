@@ -30,6 +30,9 @@ namespace CosmosDbTest
                 case "configuredb":
                     await _mediator.Send(new ConfigureDbCommand());
                     break;
+                case "addalert":
+                    await _mediator.Send(new SaveAlertCommand());
+                    break;
                 default:
                     _logger.LogError($"Invalid Command: {Command}");
                     break;
