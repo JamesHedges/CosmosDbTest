@@ -2,7 +2,7 @@
   "profiles": {
     "CosmosDbTest.Console": {
       "commandName": "Project",
-      "commandLineArgs": "ConfigureDb"
+      "commandLineArgs": "AddAlert"
     }
   }
 }

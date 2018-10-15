@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MediatR;
 using McMaster.Extensions.CommandLineUtils;
-using CosmosDbTest.ConfigureDb;
+using CosmosDbTest.ConfigureDb.Models;
 
 namespace CosmosDbTest
 {
@@ -31,7 +31,7 @@ namespace CosmosDbTest
                     await _mediator.Send(new ConfigureDbCommand());
                     break;
                 case "addalert":
-                    await _mediator.Send(new SaveAlertCommand());
+                    await _mediator.Send(new CreateAlertCommand {AlertId = Guid.NewGuid(), BatchId = Guid.NewGuid()});
                     break;
                 default:
                     _logger.LogError($"Invalid Command: {Command}");

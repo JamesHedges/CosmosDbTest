@@ -4,7 +4,7 @@ using CosmosDbTest.DAL;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace CosmosDbTest.ConfigureDb
+namespace CosmosDbTest.ConfigureDb.Models
 {
     public class ConfigureDbCommand : IRequest<ConfigureDbResponse>
     {
