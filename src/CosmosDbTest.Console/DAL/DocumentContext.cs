@@ -17,29 +17,33 @@ namespace CosmosDbTest.DAL
     {
         private readonly ILogger _logger;
         private readonly IDocumentConfiguration _configuration;
-        protected static DocumentClient _client;
+        protected static DocumentClient Client;
 
         public DocumentContext(ILogger logger, IDocumentConfiguration configuration)
         {
             _logger = logger;
             _configuration = configuration;
+            Initialize();
         }
 
         public void Dispose()
         {
-            _client?.Dispose();
+            Client?.Dispose();
         }
+
+        private Uri CollectionUri => UriFactory.CreateDocumentCollectionUri(_configuration.DatabaseId, _configuration.CollectionId);
 
         private void Initialize()
         {
-            _client = CreateClient(_configuration);
+            Client = CreateClient(_configuration);
         }
 
-        public virtual async Task<T> FindAsync(Guid id)
+        public virtual async Task<T> FindAsync(string resourceId, string partitionKey)
         {
             try
             {
-                Document document = await _client.ReadDocumentAsync(UriFactory.CreateDocumentUri(_configuration.DatabaseId, _configuration.CollectionId, id.ToString()));
+                
+                Document document = await Client.ReadDocumentAsync(UriFactory.CreateDocumentUri(_configuration.DatabaseId, _configuration.CollectionId, resourceId), new RequestOptions() { PartitionKey = new PartitionKey(partitionKey)});
                 return (T)(dynamic)document;
             }
             catch (DocumentClientException e)
@@ -55,12 +59,14 @@ namespace CosmosDbTest.DAL
             }
         }
 
-        private Uri CollectionUri => UriFactory.CreateDocumentCollectionUri(_configuration.DatabaseId, _configuration.CollectionId);
-
-        public virtual async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate)
+        public virtual async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate, string partitionId)
         {
-            IDocumentQuery<T> query = _client
-                .CreateDocumentQuery<T>(CollectionUri, new FeedOptions { MaxItemCount = -1 })
+            IDocumentQuery<T> query = Client
+                .CreateDocumentQuery<T>(CollectionUri, new FeedOptions
+                {
+                    MaxItemCount = -1,
+                    PartitionKey = new PartitionKey(partitionId)
+                })
                 .Where(predicate)
                 .AsDocumentQuery();
 
@@ -76,23 +82,37 @@ namespace CosmosDbTest.DAL
 
         public virtual async Task SaveAsync(T entity, string entityId)
         {
-            var response = await UpdateDocumentAsync(_configuration.CollectionId, entityId, entity);
-            if (response.StatusCode == HttpStatusCode.NotFound)
+            try
             {
-                var createResponse = await CreateDocumentAsync(_configuration.CollectionId, entityId, entity);
+                await UpdateDocumentAsync(_configuration.CollectionId, entityId, entity);
+            }
+            catch (DocumentClientException docEx)
+            {
+                if (docEx.StatusCode == HttpStatusCode.NotFound)
+                {
+                    await CreateAsync(entity, entityId);
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (Exception e)
+            {
+                throw;
             }
         }
 
         public virtual async Task CreateAsync(T entity, string entityId)
         {
-            var response = await _client.CreateDocumentAsync(
+            var response = await Client.CreateDocumentAsync(
                 UriFactory.CreateDocumentCollectionUri(_configuration.DatabaseId, _configuration.CollectionId), entity);
             _logger.LogInformation($"Created entity { entityId }");
         }
 
         public virtual async Task UpdateAsync(T entity, string entityId)
         {
-            var response = await _client.ReplaceDocumentAsync(UriFactory.CreateDocumentUri(_configuration.DatabaseId, _configuration.CollectionId, entityId), entity);
+            var response = await Client.ReplaceDocumentAsync(UriFactory.CreateDocumentUri(_configuration.DatabaseId, _configuration.CollectionId, entityId), entity);
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
                 _logger.LogInformation($"Entity { entityId } could not be found. No update performed.");
@@ -103,15 +123,22 @@ namespace CosmosDbTest.DAL
             }
         }
 
+        public virtual async Task DeleteAsync(string entityId, string partitionKey)
+        {
+            RequestOptions options = new RequestOptions { PartitionKey = new PartitionKey(partitionKey)};
+            var uri = UriFactory.CreateDocumentUri(_configuration.DatabaseId, _configuration.CollectionId, entityId);
+            await Client.DeleteDocumentAsync(uri, options);
+        }
+
         private async Task<ResourceResponse<Document>> UpdateDocumentAsync(string collectionId, string documentId, object document)
         {
-            return await _client.CreateDocumentAsync(UriFactory.CreateDocumentUri(_configuration.DatabaseId, collectionId, documentId), document);
+            return await Client.ReplaceDocumentAsync(UriFactory.CreateDocumentUri(_configuration.DatabaseId, collectionId, documentId), document);
         }
 
 
         private async Task<ResourceResponse<Document>> CreateDocumentAsync(string collectionId, string documentId, object document)
         {
-            return await _client.ReplaceDocumentAsync(UriFactory.CreateDocumentUri(_configuration.DatabaseId, collectionId, documentId), document);
+            return await Client.CreateDocumentAsync(UriFactory.CreateDocumentUri(_configuration.DatabaseId, collectionId, documentId), document);
 
         }
         private DocumentClient CreateClient(IDocumentConfiguration configuration)

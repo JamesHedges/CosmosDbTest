@@ -8,10 +8,12 @@ namespace CosmosDbTest
 {
     public interface ICosmosDbTestConfiguration
     {
-        string DatabaseEndPointUrl { get; }
+        string DatabaseEndPoint { get; }
         SecureString AuthorizationKey { get; }
-        string DatabaseName { get; }
+        string DatabaseId { get; }
         List<CollectionDescription> CollectionDescriptions { get; }
+
+        IDocumentConfiguration GetDocumentConfiguration(string collectionId);
     }
 
     public class CosmosDbTestConfiguration : ICosmosDbTestConfiguration
@@ -30,12 +32,12 @@ namespace CosmosDbTest
             return builder.Build();
         }
 
-        public string DatabaseEndPointUrl => _configuration?.GetValue<string>("appsettings:databaseEndPointUrl");
+        public string DatabaseEndPoint => _configuration?.GetValue<string>("appsettings:databaseEndPointUrl");
 
         public SecureString AuthorizationKey =>
             CreateSecureString(_configuration?.GetValue<string>("appsettings:authorizationKey"));
 
-        public string DatabaseName => _configuration.GetValue<string>("appsettings:databaseName");
+        public string DatabaseId => _configuration.GetValue<string>("appsettings:databaseName");
 
         public List<CollectionDescription>  CollectionDescriptions
         {
@@ -49,7 +51,12 @@ namespace CosmosDbTest
                 }).ToList();
             }}
 
-    private SecureString CreateSecureString(string key)
+        public IDocumentConfiguration GetDocumentConfiguration(string collectionId)
+        {
+            return new DocumentConfiguration(DatabaseEndPoint, AuthorizationKey, DatabaseId, collectionId);
+        }
+
+        private SecureString CreateSecureString(string key)
         {
             var secureString = new SecureString();
             foreach (char ch in key)

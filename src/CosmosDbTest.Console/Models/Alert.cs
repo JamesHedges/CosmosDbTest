@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace CosmosDbTest.ConfigureDb.Models
 {
     public class Alert
     {
+        [JsonProperty(PropertyName = "id")]
+        public Guid Id { get; set; }
         public Guid AlertId { get; set; }
         public Guid BatchId { get; set; }
-        public Guid? AssignedUserId { get; set; }
+        public Guid AnalystId { get; set; }
         public string StatusCode { get; set; }
         public string StatusCodeDescription { get; set; }
         public DateTime CreateDateUtc { get; set; }

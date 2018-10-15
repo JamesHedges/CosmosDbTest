@@ -2,7 +2,7 @@
   "profiles": {
     "CosmosDbTest.Console": {
       "commandName": "Project",
-      "commandLineArgs": "AddAlert"
+      "commandLineArgs": "showalert -I e06b91e5-d33b-4401-b514-256833f4658b -O 1766fddc-22e8-450a-9121-5f1b409417b0"
     }
   }
 }

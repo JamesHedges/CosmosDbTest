@@ -11,25 +11,26 @@ namespace CosmosDbTest.ConfigureDb.Models
     {
         public Guid AlertId { get; set; }
         public Guid BatchId { get; set; }
+        public Guid AnalystId { get; set; }
     }
 
     public class CreateAlertResponse
     {
         public Guid AlertId { get; set; }
+        public Guid AnalystId { get; set; }
         public DateTime CreateDate { get; set; }
     }
 
     public class CreateAlertHandler : IRequestHandler<CreateAlertCommand, CreateAlertResponse>
     {
         private readonly ILogger _logger;
-        private readonly ICosmosDbTestConfiguration _configuration;
         private readonly IAlertRepository _repo;
 
-        public CreateAlertHandler(ILogger logger, ICosmosDbTestConfiguration configuration, IAlertRepository repo)
+        public CreateAlertHandler(ILogger logger, ICosmosDbTestConfiguration config)
+        //public CreateAlertHandler(ILogger logger, IDocumentConfiguration alertRepositoryConfig)
         {
             _logger = logger;
-            _configuration = configuration;
-            _repo = repo;
+            _repo = new AlertRepository(_logger, config.GetDocumentConfiguration("Alert")); //repo;
         }
 
         public async Task<CreateAlertResponse> Handle(CreateAlertCommand request, CancellationToken cancellationToken)
@@ -37,6 +38,7 @@ namespace CosmosDbTest.ConfigureDb.Models
             var alert = new Alert
             {
                 AlertId = request.AlertId,
+                AnalystId = request.AnalystId,
                 BatchId = request.BatchId,
                 StatusCode = "new",
                 StatusCodeDescription = "New Alert",
@@ -44,7 +46,7 @@ namespace CosmosDbTest.ConfigureDb.Models
                 UpdateDateUtc = DateTime.UtcNow,
                 Active = true
             };
-            await _repo.CreateAlertAsync(alert);
+            await _repo.CreateAsync(alert, alert.AlertId.ToString());
             return new CreateAlertResponse { AlertId = request.AlertId, CreateDate = DateTime.UtcNow };
         }
     }

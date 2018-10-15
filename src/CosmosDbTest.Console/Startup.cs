@@ -1,4 +1,5 @@
 ﻿using System;
+using CosmosDbTest.DAL;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -10,11 +11,16 @@ namespace CosmosDbTest
     {
         public IServiceProvider ConfigureService(IServiceCollection services)
         {
+            var config = new CosmosDbTestConfiguration();
+            var docConfig = new DocumentConfiguration(config.DatabaseEndPoint,
+                config.AuthorizationKey, config.DatabaseId, "Alert");
+
             services.AddScoped<ServiceFactory>(p => p.GetService);
 
             services.AddLogging(c => c.AddConsole());
             services.AddTransient<ILogger>(p => p.GetRequiredService<ILoggerFactory>().CreateLogger("Console"));
-            services.AddSingleton<ICosmosDbTestConfiguration>(new CosmosDbTestConfiguration());
+            services.AddSingleton<ICosmosDbTestConfiguration>(config);
+            //services.AddTransient<IDocumentConfiguration>(p => p.GetRequiredService<ICosmosDbTestConfiguration>().GetDocumentConfiguration("Alert"));
 
             services.Scan(scan =>
             {

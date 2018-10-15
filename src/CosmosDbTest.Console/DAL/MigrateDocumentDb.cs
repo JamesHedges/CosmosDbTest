@@ -23,7 +23,7 @@ namespace CosmosDbTest.DAL
         private DocumentClient CreateClient(ICosmosDbTestConfiguration configuration)
         {
             return new DocumentClient(
-                new Uri(configuration.DatabaseEndPointUrl),
+                new Uri(configuration.DatabaseEndPoint),
                 configuration.AuthorizationKey,
                 GetConfigurationPolicy());
         }
@@ -58,13 +58,13 @@ namespace CosmosDbTest.DAL
         {
             try
             {
-                var db = await _client.CreateDatabaseIfNotExistsAsync(new Database { Id = _configuration.DatabaseName});
-                _logger.LogInformation($"Created if not exists db: {_configuration.DatabaseName}");
+                var db = await _client.CreateDatabaseIfNotExistsAsync(new Database { Id = _configuration.DatabaseId});
+                _logger.LogInformation($"Created if not exists db: {_configuration.DatabaseId}");
                 return db;
             }
             catch (Exception e)
             {
-                _logger.LogError($"Failed creating database {_configuration.DatabaseName}", e);
+                _logger.LogError($"Failed creating database {_configuration.DatabaseId}", e);
                 throw;
             }
         }
@@ -82,7 +82,7 @@ namespace CosmosDbTest.DAL
         {
             try
             {
-                Uri dbUri = UriFactory.CreateDatabaseUri(_configuration.DatabaseName);
+                Uri dbUri = UriFactory.CreateDatabaseUri(_configuration.DatabaseId);
                 DocumentCollection collection = new DocumentCollection
                 {
                     Id = collectionDescription.Name,
